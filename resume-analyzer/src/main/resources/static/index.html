@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analyzer</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        h1 {
+            color: #007BFF;
+            font-size: 36px;
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+        /* Form Styling */
+        form {
+            margin-bottom: 20px;
+            animation: slideIn 1s ease-in-out;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        input[type="file"]:hover {
+            border-color: #007BFF;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        button:focus {
+            outline: none;
+        }
+        /* Result Section Styling */
+        #result {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+        pre {
+            text-align: left;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+            overflow-x: auto;
+            animation: slideIn 1s ease-in-out;
+        }
+
+        /* Button Styling for Reset */
+        #resetButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #28a745;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        #resetButton:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Resume Analyzer</h1>
+    <!-- Upload Form -->
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx" required>
+        <button type="submit">Analyze Resume</button>
+    </form>
+
+    <!-- Result Section -->
+    <div id="result">
+        <h2>Analysis Result</h2>
+        <div id="resumeContent"></div>
+        <button id="resetButton">Upload Another Resume</button>
+    </div>
+
+    <script>
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                // Upload file to server
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload file. Please try again.');
+                }
+
+                const data = await response.json();
+
+                // Display analysis result
+                const resultDiv = document.getElementById('result');
+                const resumeContent = document.getElementById('resumeContent');
+                const form = document.getElementById('uploadForm');
+
+                if (data.error) {
+                    resumeContent.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+                } else {
+                    resumeContent.innerHTML = `  
+                        <p><strong>Total Words:</strong> ${data.wordCount}</p>
+                        <p><strong>Skills Identified:</strong> ${data.foundSkills.length > 0 ? data.foundSkills.join(', ') : 'No skills detected.'}</p>
+                        <hr>
+                        <p><strong>Raw Resume Content:</strong></p>
+                        <pre>${data.rawContent}</pre>
+                    `;
+                }
+
+                form.style.display = 'none';
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Reset form for another upload
+        document.getElementById('resetButton').addEventListener('click', function () {
+            document.getElementById('uploadForm').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('uploadForm').reset();
+        });
+    </script>
+</body>
+</html>
